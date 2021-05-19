@@ -1,0 +1,11 @@
+
+\
+java:S1118":Add a private constructor to hide the implicit public one.(–ìÓùÿÿÿÿ8ïøª‡˜/
+F
+java:S5411E"*Use the primitive boolean expression here.(ñËÎ^8ªŒÇŒ˜/
+X
+java:S1854l";Remove this useless assignment to local variable "retorno".(ª¾€ñ8öÎ»‰˜/
+U
+java:S1144"3Remove this unused private "createFluxFrom" method.(ã’â¢üÿÿÿÿ8Í×ıŒ˜/
+s
+java:S3008"XRename this field "ANTERIOR_BONO" to match the regular expression '^[a-z][a-zA-Z0-9]*$'.(§ÆÂÌıÿÿÿÿ
