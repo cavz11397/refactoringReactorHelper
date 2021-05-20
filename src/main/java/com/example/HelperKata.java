@@ -11,7 +11,6 @@ import java.util.*;
 import java.util.concurrent.atomic.AtomicInteger;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
-import java.util.stream.Collectors;
 import java.util.stream.Stream;
 
 
@@ -34,34 +33,27 @@ public class HelperKata {
         return getCouponDetailDtoFlux(createFluxFrom(fileBase64));
     }
 
-    private static Flux<CouponDetailDto> getCouponDetailDtoFlux(Flux<String> bufferedReader) {
+    private static Flux<CouponDetailDto> getCouponDetailDtoFlux(Flux<String> fileFlux) {
         AtomicInteger counter = new AtomicInteger(0);
         String characterSeparated = FileCSVEnum.CHARACTER_DEFAULT.getId();
         Set<String> codes = new HashSet<>();
-        return bufferedReader.skip(1)
+        return fileFlux.skip(1)
                 .map(line -> getTupleOfLine(line, line.split(characterSeparated), characterSeparated))
-                .map(tuple -> getCouponDetailDto(counter, codes, tuple));//.collect(Collectors.toList());
+                .map(tuple -> getCouponDetailDto(counter, codes, tuple));
     }
 
+
+
     private static CouponDetailDto getCouponDetailDto(AtomicInteger counter, Set<String> codes, Tuple2<String, String> tuple) {
-        String dateValidated = null;
-        String errorMessage = null;
+        String dateValidated ;
+        String bonoForObject;
         String bonoEnviado;
 
-        if (isBlank(tuple)) {
-            errorMessage = ExperienceErrorsEnum.FILE_ERROR_COLUMN_EMPTY.toString();
-        } else if (!codes.add(tuple.getT1())) {
-            errorMessage = ExperienceErrorsEnum.FILE_ERROR_CODE_DUPLICATE.toString();
-        } else if (!validateDateRegex(tuple.getT2())) {
-            errorMessage = ExperienceErrorsEnum.FILE_ERROR_DATE_PARSE.toString();
-        } else if (validateDateIsMinor(tuple.getT2())) {
-            errorMessage = ExperienceErrorsEnum.FILE_DATE_IS_MINOR_OR_EQUALS.toString();
-        } else {
-            dateValidated = tuple.getT2();
-        }
+        String errorMessage = messageError(codes, tuple);
 
+        dateValidated= Optional.of(errorMessage).filter(el -> el.equals(null)).map(el ->tuple.getT2()).orElse(null);
         bonoEnviado = tuple.getT1();
-        String bonoForObject = getBonoForObject(bonoEnviado);
+        bonoForObject = getBonoForObject(bonoEnviado);
 
         return CouponDetailDto.aCouponDetailDto()
                 .withCode(bonoForObject)
@@ -71,6 +63,57 @@ public class HelperKata {
                 .withTotalLinesFile(1)
                 .build();
     }
+
+    private static String messageError(Set<String> codes, Tuple2<String, String> tuple){
+
+        Map<String,Boolean> map = new LinkedHashMap<>();
+        map.put(ExperienceErrorsEnum.FILE_ERROR_COLUMN_EMPTY.toString(),isBlank(tuple));
+        map.put(ExperienceErrorsEnum.FILE_ERROR_CODE_DUPLICATE.toString(),!codes.add(tuple.getT1()));
+        map.put(ExperienceErrorsEnum.FILE_ERROR_DATE_PARSE.toString(),!validateDateRegex(tuple.getT2()));
+        map.put(ExperienceErrorsEnum.FILE_DATE_IS_MINOR_OR_EQUALS.toString(),validateDateIsMinor(tuple.getT2()));
+
+        for (Map.Entry<String, Boolean> jugador : map.entrySet()){
+            if(jugador.getValue()){
+                return jugador.getKey();
+            }
+        }
+        return null;
+    }
+
+    /*private static String messageError(Set<String> codes, Tuple2<String, String> tuple){
+
+        return isBlank(tuple)
+                ? ExperienceErrorsEnum.FILE_ERROR_COLUMN_EMPTY.toString()
+                : getString3(codes, tuple);
+       *//* if (isBlank(tuple)) {
+            errorMessage = ExperienceErrorsEnum.FILE_ERROR_COLUMN_EMPTY.toString();
+        } else if (!codes.add(tuple.getT1())) {
+            errorMessage = ExperienceErrorsEnum.FILE_ERROR_CODE_DUPLICATE.toString();
+        } else if (!validateDateRegex(tuple.getT2())) {
+            errorMessage = ExperienceErrorsEnum.FILE_ERROR_DATE_PARSE.toString();
+        } else if (validateDateIsMinor(tuple.getT2())) {
+            errorMessage = ExperienceErrorsEnum.FILE_DATE_IS_MINOR_OR_EQUALS.toString();
+        }
+        return errorMessage;*//*
+    }
+
+    private static String getString3(Set<String> codes, Tuple2<String, String> tuple) {
+        return !codes.add(tuple.getT1())
+            ?  ExperienceErrorsEnum.FILE_ERROR_CODE_DUPLICATE.toString()
+            : getString2(tuple);
+    }
+
+    private static String getString2(Tuple2<String, String> tuple) {
+        return !validateDateRegex(tuple.getT2())
+            ?  ExperienceErrorsEnum.FILE_ERROR_DATE_PARSE.toString()
+            : getString(tuple);
+    }
+
+    private static String getString(Tuple2<String, String> tuple) {
+        return validateDateIsMinor(tuple.getT2())
+                ? ExperienceErrorsEnum.FILE_DATE_IS_MINOR_OR_EQUALS.toString()
+                : null;
+    }*/
 
     private static boolean isBlank(Tuple2<String, String> tuple) {
         return tuple.getT1().isBlank() || tuple.getT2().isBlank();
@@ -91,17 +134,10 @@ public class HelperKata {
 
 
     public static String typeBono(String bonoIn) {
-        String retorno;
-        if (matchesBono(bonoIn)) {
-            retorno = ValidateCouponEnum.EAN_13.getTypeOfEnum();
-        }
-        if (isBooleanReplaceAsteriscos(bonoIn)) {
-            retorno = ValidateCouponEnum.EAN_39.getTypeOfEnum();
-
-        } else {
-            retorno = ValidateCouponEnum.ALPHANUMERIC.getTypeOfEnum();
-        }
-        return retorno;
+        return Optional.of(bonoIn)
+                .filter(HelperKata::isBooleanReplaceAsteriscos)
+                .map(el -> ValidateCouponEnum.EAN_39.getTypeOfEnum())
+                .orElse(ValidateCouponEnum.ALPHANUMERIC.getTypeOfEnum());
     }
 
     private static boolean isBooleanReplaceAsteriscos(String bonoIn) {
