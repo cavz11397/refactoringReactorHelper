@@ -42,19 +42,15 @@ public class HelperKata {
                 .map(tuple -> getCouponDetailDto(counter, codes, tuple));
     }
 
-
-
     private static CouponDetailDto getCouponDetailDto(AtomicInteger counter, Set<String> codes, Tuple2<String, String> tuple) {
         String dateValidated ;
         String bonoForObject;
         String bonoEnviado;
 
         String errorMessage = messageError(codes, tuple);
-
         dateValidated= Optional.of(errorMessage).filter(el -> el.equals(null)).map(el ->tuple.getT2()).orElse(null);
         bonoEnviado = tuple.getT1();
         bonoForObject = getBonoForObject(bonoEnviado);
-
         return CouponDetailDto.aCouponDetailDto()
                 .withCode(bonoForObject)
                 .withDueDate(dateValidated)
@@ -80,58 +76,30 @@ public class HelperKata {
         return null;
     }
 
-    /*private static String messageError(Set<String> codes, Tuple2<String, String> tuple){
-
-        return isBlank(tuple)
-                ? ExperienceErrorsEnum.FILE_ERROR_COLUMN_EMPTY.toString()
-                : getString3(codes, tuple);
-       *//* if (isBlank(tuple)) {
-            errorMessage = ExperienceErrorsEnum.FILE_ERROR_COLUMN_EMPTY.toString();
-        } else if (!codes.add(tuple.getT1())) {
-            errorMessage = ExperienceErrorsEnum.FILE_ERROR_CODE_DUPLICATE.toString();
-        } else if (!validateDateRegex(tuple.getT2())) {
-            errorMessage = ExperienceErrorsEnum.FILE_ERROR_DATE_PARSE.toString();
-        } else if (validateDateIsMinor(tuple.getT2())) {
-            errorMessage = ExperienceErrorsEnum.FILE_DATE_IS_MINOR_OR_EQUALS.toString();
-        }
-        return errorMessage;*//*
-    }
-
-    private static String getString3(Set<String> codes, Tuple2<String, String> tuple) {
-        return !codes.add(tuple.getT1())
-            ?  ExperienceErrorsEnum.FILE_ERROR_CODE_DUPLICATE.toString()
-            : getString2(tuple);
-    }
-
-    private static String getString2(Tuple2<String, String> tuple) {
-        return !validateDateRegex(tuple.getT2())
-            ?  ExperienceErrorsEnum.FILE_ERROR_DATE_PARSE.toString()
-            : getString(tuple);
-    }
-
-    private static String getString(Tuple2<String, String> tuple) {
-        return validateDateIsMinor(tuple.getT2())
-                ? ExperienceErrorsEnum.FILE_DATE_IS_MINOR_OR_EQUALS.toString()
-                : null;
-    }*/
-
     private static boolean isBlank(Tuple2<String, String> tuple) {
         return tuple.getT1().isBlank() || tuple.getT2().isBlank();
     }
 
     private static String getBonoForObject(String bonoEnviado) {
+        //Imperativo
         String bonoForObject = null;
         if (isNullOrEquals(bonoEnviado)) {
             ANTERIOR_BONO = typeBono(bonoEnviado);
             bonoForObject = bonoEnviado;
         }
         return bonoForObject;
+
+        //Funcional
+        /*return Optional.of(bonoEnviado).filter(el->isNullOrEquals(el)).map(el->{
+            ANTERIOR_BONO=typeBono(el);
+            return el;
+        }).orElse(null);*/
+
     }
 
     private static boolean isNullOrEquals(String bonoEnviado) {
         return ANTERIOR_BONO == null || ANTERIOR_BONO.equals(typeBono(bonoEnviado));
     }
-
 
     public static String typeBono(String bonoIn) {
         return Optional.of(bonoIn)
@@ -158,13 +126,13 @@ public class HelperKata {
         return num1 >= num2;
     }
 
-    private static boolean matchesBono(String bonoIn) {
+    /*private static boolean matchesBono(String bonoIn) {
         return bonoIn.chars().allMatch(Character::isDigit) && lenghtBono(bonoIn);
-    }
+    }*/
 
-    private static boolean lenghtBono(String bonoIn) {
+    /*private static boolean lenghtBono(String bonoIn) {
         return numberBiggestOrEqual(bonoIn.length(), 12) && numberLessOrEqual(bonoIn.length(), 13);
-    }
+    }*/
 
     public static boolean validateDateRegex(String dateForValidate) {
         String regex = FileCSVEnum.PATTERN_DATE_DEFAULT.getId();
